@@ -17,6 +17,10 @@ class tactics:
 		listSlice =  random.sample(range(0,total), number)
 		listSlice.sort()
 		return listSlice
+
+	#给出固定的传感器序列
+	def fixedTactic(self, listc):
+		return listc
 		
 if __name__ == '__main__':
 	tac = tactics()

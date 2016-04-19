@@ -13,6 +13,12 @@ __doc__ = '''用于kriging的计算'''
 class calculate:
 	def __init__(self):
 		pass
+	def createData(self, rawData, selectedList):
+		pass
+	def calculateData(self, filteredData, gridx, gridy, gridz):
+		pass
+	def analysisData(self):
+		pass
 	
 if __name__ == '__main__':
 	print 'ok'
