@@ -3,37 +3,83 @@
 
 import sys
 sys.path.append("..")
-import fileIO.readCsv
-import pickTactics.tactics
+
+
 import numpy
+from pickTactics.tactics import tactics
+from fileIO.readCsv import readCsv
 from pykrige.ok3d import OrdinaryKriging3D
 
 __doc__ = '''用于kriging的计算'''
 
 class calculate:
-	def __init__(self):
-		pass
-	def generatePos(self):
-		pos = {
-		'10728412':(0,900,0) , '10728515':(0,900,190), '10728382':(0,900,360),
-		'10728506':(0,460,0) , '10728402':(0,460,190), '10728400':(0,460,360),
-		'10728435':(191.1, 460,0), '10728517':(191.1, 460,190), '10728383':(191.1, 460,360),
-		'10728534':(464.1, 460,150), '10728432':(464.1, 460,360), '10728401':(464.1, 460,550),
-		'10728391':(737.1, 460,0), '10728437':(737.1, 460,190), '10728525':(737.1, 460,360), 
-		'10728399':(920, 0,0), '10728518':(920, 0,180), '10728442':(920, 0,360),
-		'10728527':(1010, 460,0), '10728390':(1010, 460,180), '10728405':(1010, 460,290),
-		'10728419':(1100, 290,0), '10728425':(1100, 290,180), '10728439':(1100, 290,320),
-		'10728404':(1450,460,0), '10728408':(1450,460,180), '10728522':(1450,460,360), '10728396':(1450,460,465),
-		'10728422':(1800,740,0), '10728507':(1800,740,180), '10728513':(1800,740,320),
-		'10728387':(1800,300,0), '10728385':(1800,300,180), '10728519':(1800,300,320)
-		}
-		return pos
-	def createData(self, rawData, selectedList):
-		pass
-	def calculateData(self, filteredData, gridx, gridy, gridz):
-		pass
+	def __init__(self, path):
+		
+		tac = tactics()
+		reader = readCsv(path)
+		self.selectedList = tac.randomTactic()
+		self.sensorPosData = reader.getSensorPos()
+		self.allSensorNum = tac.getAllSensorNum()
+		self.sensorRawData = reader.getSensorData()
+		
+	def createData(self, rawData, selectedList, allSensorNum):
+		#对原始数据根据selectedList进行拆分，并对坐标进行整合
+		calData = []
+		for selectedItem in selectedList:
+			colData = []
+			for valData in rawData[selectedItem]:
+				#将坐标和温湿度进行拼接
+				rowData = list(self.sensorPosData[selectedItem]) + list(valData)
+				colData.append(rowData)				
+			calData.append(colData)
+		
+		calPos = []
+		#找出未选中的传感器节点编号
+		unSelectedList = [item for item in allSensorNum if item not in selectedList]
+		for unSelectedItem in unSelectedList:
+			calPos.append(list(self.sensorPosData[unSelectedItem]))
+			
+		return calData,calPos
+		
+		
+	def doCalculateData(self, data, gridx, gridy, gridz):
+		ok3d = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 3],variogram_model='spherical')
+		k3d, ss3d = ok3d.execute('points', gridx, gridy, gridz)
+		
+	def calculateData(self, calData, calPos):
+		colLen = [len(item) for item in calData]
+		minColLen = min(colLen)
+		
+		#分别求出x，y，z的列表
+		gridx = []
+		gridy = []
+		gridz = []
+		for idx in range(3):
+			for item in calPos:
+				if idx == 0:
+					gridx.append(item[idx])
+				elif idx == 1:
+					gridy.append(item[idx])
+				elif idx == 2:
+					gridz.append(item[idx])
+		gridx = numpy.array(gridx)
+		gridy = numpy.array(gridy)
+		gridz = numpy.array(gridz)
+		
+		for rowIdx in range(minColLen):
+			eachRow = []
+			for colItem in calData:
+				eachRow.append(colItem[rowIdx])
+				
+			data = numpy.array(eachRow)
+			
+			self.doCalculateData(data, gridx, gridy, gridz)
+		
+		
 	def analysisData(self):
 		pass
 	
 if __name__ == '__main__':
-	print 'ok'
+	cal = calculate('/home/captain/文档/code/python/labWork/kriging/data')
+	calData, calPos = cal.createData(cal.sensorRawData, cal.selectedList, cal.allSensorNum)
+	print calData
