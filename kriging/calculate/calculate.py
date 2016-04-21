@@ -3,26 +3,25 @@
 
 import sys
 sys.path.append("..")
-
-
 import numpy
 from pickTactics.tactics import tactics
 from fileIO.readCsv import readCsv
+from fileIO.writeCsv import writeCsv
 from pykrige.ok3d import OrdinaryKriging3D
 
 __doc__ = '''用于kriging的计算'''
 
 class calculate:
-	def __init__(self, path):
+	def __init__(self, inputPath, outputFile):
 		
 		tac = tactics()
-		reader = readCsv(path)
-		self.selectedList = tac.randomTactic()
+		reader = readCsv(inputPath)
+		self.writer = writeCsv(outputFile)
+		self.selectedList, self.unSelectedList = tac.randomTactic()
 		self.sensorPosData = reader.getSensorPos()
-		self.allSensorNum = tac.getAllSensorNum()
 		self.sensorRawData = reader.getSensorData()
 		
-	def createData(self, rawData, selectedList, allSensorNum):
+	def createData(self, rawData, selectedList):
 		#对原始数据根据selectedList进行拆分，并对坐标进行整合
 		calData = []
 		for selectedItem in selectedList:
@@ -34,17 +33,38 @@ class calculate:
 			calData.append(colData)
 		
 		calPos = []
-		#找出未选中的传感器节点编号
-		unSelectedList = [item for item in allSensorNum if item not in selectedList]
-		for unSelectedItem in unSelectedList:
+		#找出未选中的传感器坐标
+		for unSelectedItem in self.unSelectedList:
 			calPos.append(list(self.sensorPosData[unSelectedItem]))
 			
 		return calData,calPos
 		
 		
-	def doCalculateData(self, data, gridx, gridy, gridz):
-		ok3d = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 3],variogram_model='spherical')
-		k3d, ss3d = ok3d.execute('points', gridx, gridy, gridz)
+	def doCalculateData(self, data, gridx, gridy, gridz, rowIdx):
+		#对温度进行插值
+		ok3dTemp = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 3],variogram_model='spherical')
+		k3dTemp, ss3dTemp = ok3dTemp.execute('points', gridx, gridy, gridz)
+		
+		#对湿度进行差值
+		ok3dHum = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 4],variogram_model='spherical')
+		k3dHum, ss3dHum = ok3dHum.execute('points', gridx, gridy, gridz)
+		
+		#最后保存的数据，包括传感器编号，对应的x，y，z坐标，原始值，差值测量值
+		finalData = []
+		for idx in range(len(self.unSelectedList)):
+			rowData = []
+			rowData.append(self.unSelectedList[idx])
+			rowData.append(self.sensorPosData[self.unSelectedList[idx]][0])
+			rowData.append(self.sensorPosData[self.unSelectedList[idx]][1])
+			rowData.append(self.sensorPosData[self.unSelectedList[idx]][2])
+			rowData.append(self.sensorRawData[self.unSelectedList[idx]][rowIdx][0])  #温度
+			rowData.append(str(k3dTemp[idx]))
+			rowData.append(self.sensorRawData[self.unSelectedList[idx]][rowIdx][1])  #湿度
+			rowData.append(str(k3dHum[idx]))
+			
+			finalData.append(rowData)
+		
+		self.writer.writeResult(finalData)
 		
 	def calculateData(self, calData, calPos):
 		colLen = [len(item) for item in calData]
@@ -62,24 +82,32 @@ class calculate:
 					gridy.append(item[idx])
 				elif idx == 2:
 					gridz.append(item[idx])
-		gridx = numpy.array(gridx)
-		gridy = numpy.array(gridy)
-		gridz = numpy.array(gridz)
+		
+		gridx = numpy.array([float(i) for i in gridx])
+		gridy = numpy.array([float(i) for i in gridy])
+		gridz = numpy.array([float(i) for i in gridz])
 		
 		for rowIdx in range(minColLen):
 			eachRow = []
 			for colItem in calData:
 				eachRow.append(colItem[rowIdx])
-				
-			data = numpy.array(eachRow)
 			
-			self.doCalculateData(data, gridx, gridy, gridz)
+			#将字符串类型转化为float
+			eachRowFloat = []
+			for row in eachRow:
+				eachRowFloat.append([float(element) for element in row])
+			
+			#print eachRowFloat
+			data = numpy.array(eachRowFloat)
+			
+			self.doCalculateData(data, gridx, gridy, gridz, rowIdx)
 		
-		
-	def analysisData(self):
-		pass
+	def run(self):
+		calData, calPos = self.createData(self.sensorRawData, self.selectedList)
+		self.calculateData(calData, calPos)
+		print 'Calculate successfully !'
 	
 if __name__ == '__main__':
-	cal = calculate('/home/captain/文档/code/python/labWork/kriging/data')
-	calData, calPos = cal.createData(cal.sensorRawData, cal.selectedList, cal.allSensorNum)
-	print calData
+	cal = calculate('/home/captain/文档/code/python/labWork/kriging/data',
+	'/home/captain/文档/code/python/labWork/kriging/data/result/result.csv')
+	cal.run()

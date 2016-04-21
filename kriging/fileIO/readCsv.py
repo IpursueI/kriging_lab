@@ -19,7 +19,7 @@ class readCsv:
 	#用于初始化时读取所有csv的文件名
 	def getFileName(self, path):
 		fileList = os.listdir(path)
-		return [os.path.join(self.dirPath, item) for item in fileList if item != 'pos']  #把pos目录排除掉
+		return [os.path.join(self.dirPath, item) for item in fileList if item != 'pos' and item != 'result']  #把pos和result目录排除掉
 	
 	#根据文件名，每个文件的起始行，步长，读取文件数据
 	def getSensorData(self, step = 10, startRow=2):
@@ -50,7 +50,7 @@ class readCsv:
 			for row in fCsv:
 				posData[row[0]] = (row[1], row[2],row[3])
 			return posData
-				
+		
 			
 if __name__ == "__main__":
 	rd = readCsv('/home/captain/文档/code/python/labWork/kriging/data')

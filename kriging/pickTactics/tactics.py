@@ -21,13 +21,15 @@ class tactics:
 	def randomTactic(self, total = 34, number=10):
 		listSlice =  random.sample(range(0,total), number)
 		listSlice.sort()
-		listResult = [self.sensorNum[i] for i in listSlice]
-		return listResult
+		selectedList = [self.sensorNum[i] for i in listSlice]
+		unSelectedList = [item for item in self.sensorNum if item not in selectedList]
+		return selectedList, unSelectedList
 
 	#给出固定的传感器序列，列表取值范围时0-33
 	def fixedTactic(self, listc):
-		listResult = [self.sensorNum[i] for i in listc]
-		return listResult
+		selectedList = [self.sensorNum[i] for i in listc]
+		unSelectedList = [item for item in self.sensorNum if item not in selectedList]
+		return selectedList, unSelectedList
 		
 if __name__ == '__main__':
 	tac = tactics()
