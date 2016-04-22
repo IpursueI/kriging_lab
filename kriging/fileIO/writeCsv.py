@@ -13,7 +13,7 @@ class writeCsv:
 		self.fileName = path
 		self.csvfile = file(path, 'a+')
 		self.writer = csv.writer(self.csvfile)
-		self.writer.writerow(['传感器编号','x坐标(cm)','y坐标(cm)','z坐标(cm)','原始温度','差值温度','原始湿度','差值湿度'])
+		self.writer.writerow(['传感器编号','x坐标(cm)','y坐标(cm)','z坐标(cm)','原始温度','插值温度','原始湿度','插值湿度'])
 		
 	def writeResult(self, resultData):
 		self.writer.writerows(resultData)

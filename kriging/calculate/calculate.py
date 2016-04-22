@@ -39,33 +39,6 @@ class calculate:
 			
 		return calData,calPos
 		
-		
-	def doCalculateData(self, data, gridx, gridy, gridz, rowIdx):
-		#对温度进行插值
-		ok3dTemp = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 3],variogram_model='spherical')
-		k3dTemp, ss3dTemp = ok3dTemp.execute('points', gridx, gridy, gridz)
-		
-		#对湿度进行差值
-		ok3dHum = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 4],variogram_model='spherical')
-		k3dHum, ss3dHum = ok3dHum.execute('points', gridx, gridy, gridz)
-		
-		#最后保存的数据，包括传感器编号，对应的x，y，z坐标，原始值，差值测量值
-		finalData = []
-		for idx in range(len(self.unSelectedList)):
-			rowData = []
-			rowData.append(self.unSelectedList[idx])
-			rowData.append(self.sensorPosData[self.unSelectedList[idx]][0])
-			rowData.append(self.sensorPosData[self.unSelectedList[idx]][1])
-			rowData.append(self.sensorPosData[self.unSelectedList[idx]][2])
-			rowData.append(self.sensorRawData[self.unSelectedList[idx]][rowIdx][0])  #温度
-			rowData.append(str(k3dTemp[idx]))
-			rowData.append(self.sensorRawData[self.unSelectedList[idx]][rowIdx][1])  #湿度
-			rowData.append(str(k3dHum[idx]))
-			
-			finalData.append(rowData)
-		
-		self.writer.writeResult(finalData)
-		
 	def calculateData(self, calData, calPos):
 		colLen = [len(item) for item in calData]
 		minColLen = min(colLen)
@@ -101,6 +74,32 @@ class calculate:
 			data = numpy.array(eachRowFloat)
 			
 			self.doCalculateData(data, gridx, gridy, gridz, rowIdx)
+			
+	def doCalculateData(self, data, gridx, gridy, gridz, rowIdx):
+		#对温度进行插值
+		ok3dTemp = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 3],variogram_model='spherical')
+		k3dTemp, ss3dTemp = ok3dTemp.execute('points', gridx, gridy, gridz)
+		
+		#对湿度进行差值
+		ok3dHum = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 4],variogram_model='spherical')
+		k3dHum, ss3dHum = ok3dHum.execute('points', gridx, gridy, gridz)
+		
+		#最后保存的数据，包括传感器编号，对应的x，y，z坐标，原始值，差值测量值
+		finalData = []
+		for idx in range(len(self.unSelectedList)):
+			rowData = []
+			rowData.append(self.unSelectedList[idx])
+			rowData.append(self.sensorPosData[self.unSelectedList[idx]][0])
+			rowData.append(self.sensorPosData[self.unSelectedList[idx]][1])
+			rowData.append(self.sensorPosData[self.unSelectedList[idx]][2])
+			rowData.append(self.sensorRawData[self.unSelectedList[idx]][rowIdx][0])  #温度
+			rowData.append(str(k3dTemp[idx]))
+			rowData.append(self.sensorRawData[self.unSelectedList[idx]][rowIdx][1])  #湿度
+			rowData.append(str(k3dHum[idx]))
+			
+			finalData.append(rowData)
+		
+		self.writer.writeResult(finalData)
 		
 	def run(self):
 		calData, calPos = self.createData(self.sensorRawData, self.selectedList)
