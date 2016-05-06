@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding=utf-8
+#-*- coding:utf-8 -*-
 
 __doc__ = ''' 从data文件夹中的csv读取数据，一共有34个csv文件，
 每个csv中的数据除了尾部部分数据有差别外，其他数据
@@ -53,5 +53,5 @@ class readCsv:
 		
 			
 if __name__ == "__main__":
-	rd = readCsv('/home/captain/文档/code/python/labWork/kriging/data')
+	rd = readCsv('E:/code/python/kriging_lab/kriging/data')
 	print rd.getSensorData()

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding=utf-8
+#-*- coding:utf-8 -*-
 
 __doc__ = ''' 根据插值后的数据计算误差，并将结果保存
 '''
@@ -70,8 +70,8 @@ class analysis:
 			
 		
 if __name__ == '__main__':
-	an = analysis('/home/captain/文档/code/python/labWork/kriging/data/result/result.csv', 
-	'/home/captain/文档/code/python/labWork/kriging/data/result/errorResult.csv')
+	an = analysis('E:/code/python/kriging_lab/kriging/data/result/result.csv', 
+	'E:/code/python/kriging_lab/kriging/data/result/errorResult.csv')
 	#print an.getTempAbsoluteError()
 	#print an.getTempRelativeError()
 	#print an.getHumAbsoluteError()

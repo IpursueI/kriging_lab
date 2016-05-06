@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding=utf-8
+#-*- coding:utf-8 -*-
 
 __doc__ = '''
 本文件主要涉及传感器的选择策略

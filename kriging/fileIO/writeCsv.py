@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding=utf-8
+#-*- coding:utf-8 -*-
 
 __doc__ = ''' 将插值后的数据保存到csv当中
 '''
@@ -22,6 +22,6 @@ class writeCsv:
 		self.csvfile.close()
 			
 if __name__ == "__main__":
-	wc = writeCsv('/home/captain/文档/code/python/labWork/kriging/data/result/test.csv')
+	wc = writeCsv('E:/code/python/kriging_lab/kriging/data/result/test.csv')
 	data = [['1','2','3','4'],['5','6','7','8']]
 	wc.writeResult(data)

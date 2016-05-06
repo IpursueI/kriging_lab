@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#coding=utf-8
+#-*- coding:utf-8 -*-
 
 import sys
 sys.path.append("..")
@@ -107,6 +107,6 @@ class calculate:
 		print 'Calculate successfully !'
 	
 if __name__ == '__main__':
-	cal = calculate('/home/captain/文档/code/python/labWork/kriging/data',
-	'/home/captain/文档/code/python/labWork/kriging/data/result/result.csv')
+	cal = calculate('E:/code/python/kriging_lab/kriging/data',
+	'E:/code/python/kriging_lab/kriging/data/result/result.csv')
 	cal.run()
