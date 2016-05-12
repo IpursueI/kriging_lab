@@ -7,10 +7,13 @@ import os,sys
 import csv
 
 class analysis:
-	def __init__(self, inputFile, outputFile):
+	def __init__(self, inputFile, outputFile, ratingOutputFile, totalSensorNum, selectedSensorNum):
 		self.inputFile = inputFile
 		self.outputFile = outputFile
-		
+		self.ratingOutputFile = ratingOutputFile
+		self.totalSensorNum = totalSensorNum
+		self.selectedSensorNum = selectedSensorNum
+
 		
 		#读取csv中的结果数据
 		csvfile = file(self.inputFile, 'rb')
@@ -47,7 +50,7 @@ class analysis:
 	def getHumRelativeError(self):
 		return self.humRelativeError
 	
-	
+	#对每个传感器都计算绝对误差和相对误差，并记录到文件
 	def writeErrorResult(self):
 		csvfile = file(self.outputFile, 'w')
 		writer = csv.writer(csvfile)
@@ -67,14 +70,42 @@ class analysis:
 		writer.writerows(resultData)
 		csvfile.close()
 			
-			
+		print 'write errorResultFile successfully !'
+
+	#对每组数据，数据元素个数为(34-x)，参数errorList是一个误差列表
+	def writeErrorRatingResult(self, error):
+		restSensorNum = self.totalSensorNum - self.selectedSensorNum
+		counts = len(self.tempRelativeError) / restSensorNum
+		results = []
+
+		for i in range(counts):
+			tempCount = 0
+			humCount = 0
+			for j in range(restSensorNum):
+				if(self.tempRelativeError[i*restSensorNum+j] <= error):
+					tempCount += 1
+				if(self.humRelativeError[i*restSensorNum+j] <= error):
+					humCount += 1
+			results.append([restSensorNum, tempCount, float(tempCount)/restSensorNum, humCount, float(humCount)/restSensorNum])
+
+
+		csvfile = file(self.ratingOutputFile, 'w')
+		writer = csv.writer(csvfile)
+		writer.writerow(['总插传感器个数','满足温度误差的传感器个数', '满足温度误差的传感器所占百分比',
+			'满足湿度误差的传感器个数', '满足湿度误差的传感器所占百分比'])
+
+		writer.writerows(results)
+		csvfile.close()
+
+		print 'write errorRatingResultFile successfully !'
 		
 if __name__ == '__main__':
 	an = analysis('E:/code/python/kriging_lab/kriging/data/result/result.csv', 
-	'E:/code/python/kriging_lab/kriging/data/result/errorResult.csv')
+	'E:/code/python/kriging_lab/kriging/data/result/errorResult.csv',
+	'E:/code/python/kriging_lab/kriging/data/result/errorRatingResult.csv', 34, 10)
 	#print an.getTempAbsoluteError()
 	#print an.getTempRelativeError()
 	#print an.getHumAbsoluteError()
 	#print an.getHumRelativeError()
-	an.writeErrorResult()
-	print "write errorResult finished"
+	#an.writeErrorResult()
+	an.writeErrorRatingResult(0.05)

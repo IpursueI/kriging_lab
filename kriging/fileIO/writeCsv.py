@@ -18,7 +18,7 @@ class writeCsv:
 	def writeResult(self, resultData):
 		self.writer.writerows(resultData)
 	
-	def __del__(self):
+	def close(self):
 		self.csvfile.close()
 			
 if __name__ == "__main__":

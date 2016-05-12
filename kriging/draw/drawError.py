@@ -8,10 +8,11 @@ import csv
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
-class draw:
+class drawError:
 	'''将数据分析后的结果进行可视化展示'''
-	def __init__(self, path, eachNum, startRow = 1):
+	def __init__(self, errorResultFilePath, eachNum, startRow = 1):
 
 		#选择字体，否则无法显示中文，在ubuntu中字体查看可以使用命令'fc-list :lang=zh'
 		#以下是unbuntu字体配置
@@ -19,10 +20,10 @@ class draw:
 		#以下是windows字体配置
 		self.zhfont = mpl.font_manager.FontProperties(fname='C:/Windows/Fonts/simhei.ttf')
 
-		csvfile = file(path, 'rb')
+		csvfile = file(errorResultFilePath, 'rb')
 		reader = csv.reader(csvfile)
 		self.data = [line for line in reader]
-		self.fileName = path
+		self.fileName = errorResultFilePath
 		self.eachNum = eachNum
 		self.startRow = startRow
 		self.totalPic = (len(self.data)-startRow) / eachNum
@@ -149,11 +150,10 @@ class draw:
 		ax2.set_ylabel(u'湿度值', fontproperties = self.zhfont)
 
 		plt.show()
-		
-		
+
 			
 if __name__ == "__main__":
-	drawer = draw('E:/code/python/kriging_lab/kriging/data/result/errorResult.csv', 24)
-	drawer.drawValueBars(0)
-	#drawer.drawTempErrorBars(0)
+	drawer = drawError('E:/code/python/kriging_lab/kriging/data/result/errorResult.csv',24)
+	#drawer.drawValueBars(0)
+	drawer.drawTempErrorBars(0)
 	#drawer.drawHumErrorBars(0)

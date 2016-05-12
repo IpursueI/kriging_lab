@@ -12,14 +12,14 @@ from pykrige.ok3d import OrdinaryKriging3D
 __doc__ = '''用于kriging的计算'''
 
 class calculate:
-	def __init__(self, inputPath, outputFile):
+	def __init__(self, inputPath, outputFile, selectedList, unSelectedList, totalSensorDataNum):
 		
-		tac = tactics()
 		reader = readCsv(inputPath)
 		self.writer = writeCsv(outputFile)
-		self.selectedList, self.unSelectedList = tac.randomTactic()
+		self.selectedList = selectedList
+		self.unSelectedList = unSelectedList
 		self.sensorPosData = reader.getSensorPos()
-		self.sensorRawData = reader.getSensorData()
+		self.sensorRawData = reader.getSensorData(totalSensorDataNum)
 		
 	def createData(self, rawData, selectedList):
 		#对原始数据根据selectedList进行拆分，并对坐标进行整合
@@ -104,9 +104,14 @@ class calculate:
 	def run(self):
 		calData, calPos = self.createData(self.sensorRawData, self.selectedList)
 		self.calculateData(calData, calPos)
+		self.writer.close()
 		print 'Calculate successfully !'
 	
 if __name__ == '__main__':
+	
+	tac = tactics()
+	selectedList, unSelectedList = tac.randomTactic(10)
 	cal = calculate('E:/code/python/kriging_lab/kriging/data',
-	'E:/code/python/kriging_lab/kriging/data/result/result.csv')
+	'E:/code/python/kriging_lab/kriging/data/result/result.csv',
+	selectedList, unSelectedList,10)
 	cal.run()

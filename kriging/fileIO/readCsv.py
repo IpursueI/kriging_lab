@@ -22,7 +22,9 @@ class readCsv:
 		return [os.path.join(self.dirPath, item) for item in fileList if item != 'pos' and item != 'result']  #把pos和result目录排除掉
 	
 	#根据文件名，每个文件的起始行，步长，读取文件数据
-	def getSensorData(self, step = 10, startRow=2):
+	#设置步长的原因是因为相邻的多个数据中温度和湿度的数值几乎不变，可以省略掉一些数值避免重复计算
+	#total表示选取数据的个数
+	def getSensorData(self, totalNum, step = 10, startRow=2):
 		totalData = {};
 		for item in self.fileList:
 			csvfile = file(item, 'rb')
@@ -31,6 +33,9 @@ class readCsv:
 			
 			#每个文件的末尾含有一些无用数据，因此删除一些
 			fileLen = len(tmpData)-4
+
+			#取totalNum和fileLen的最小值，防止所给的totalNum超出总的数据量
+			totalNum = min(totalNum, fileLen)
 			
 			#根据文件名获取传感器编号
 			fileName = os.path.basename(item)
@@ -38,7 +43,9 @@ class readCsv:
 			
 			#根据起始行和步长提取出文件中的数据，文件格式为  [传感器编号，温度，湿度]
 			fileData = [(tmpData[i][2], tmpData[i][3]) for i in range(startRow, fileLen, step)]
-			totalData[sensorNum] = fileData[:2]
+
+			#当传感器数据太多时，可以控制取出传感器数据的个数
+			totalData[sensorNum] = fileData[:totalNum]
 		return totalData
 	
 	#获取传感器坐标，文件格式是，传感器编号，x坐标，y坐标，z坐标
@@ -54,4 +61,4 @@ class readCsv:
 			
 if __name__ == "__main__":
 	rd = readCsv('E:/code/python/kriging_lab/kriging/data')
-	print rd.getSensorData()
+	print rd.getSensorData(2)

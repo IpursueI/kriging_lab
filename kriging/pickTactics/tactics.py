@@ -18,7 +18,7 @@ class tactics:
 		return self.sensorNum
 		
 	#根据传入的传感器个数，随机挑选传感器
-	def randomTactic(self, total = 34, number=10):
+	def randomTactic(self, number, total = 34,):
 		listSlice =  random.sample(range(0,total), number)
 		listSlice.sort()
 		selectedList = [self.sensorNum[i] for i in listSlice]
