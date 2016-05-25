@@ -11,7 +11,7 @@ class writeCsv:
 	'''读取csv文件'''
 	def __init__(self, path):
 		self.fileName = path
-		self.csvfile = file(path, 'a+')
+		self.csvfile = file(path, 'w')
 		self.writer = csv.writer(self.csvfile)
 		self.writer.writerow(['传感器编号','x坐标(cm)','y坐标(cm)','z坐标(cm)','原始温度','插值温度','原始湿度','插值湿度'])
 		

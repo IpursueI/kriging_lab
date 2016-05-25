@@ -49,6 +49,21 @@ class analysis:
 	#获取湿度的相对误差
 	def getHumRelativeError(self):
 		return self.humRelativeError
+
+	#获得温度方差
+	def getTempVar(self):
+		res = 0
+		for item in self.tempAbsoluteError:
+			res += item*item
+		return res/len(self.tempAbsoluteError)
+
+
+	#获得湿度方差
+	def getHumVar(self):
+		res = 0
+		for item in self.humAbsoluteError:
+			res += item*item
+		return res/len(self.humAbsoluteError)
 	
 	#对每个传感器都计算绝对误差和相对误差，并记录到文件
 	def writeErrorResult(self):
@@ -108,4 +123,6 @@ if __name__ == '__main__':
 	#print an.getHumAbsoluteError()
 	#print an.getHumRelativeError()
 	#an.writeErrorResult()
-	an.writeErrorRatingResult(0.05)
+	#an.writeErrorRatingResult(0.05)
+	print an.getTempVar()
+	print an.getHumVar()

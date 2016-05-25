@@ -9,6 +9,7 @@ import random
 
 class tactics:
 	def __init__(self):
+		#点的编号按照洞窟内传感器的布局，从低到高，从里到外，以便后续选点也按照这个顺序，这样可以在后续的图形绘制中体现出温湿度与布局的关系
 		self.sensorNum = ['10728412','10728515','10728382','10728506','10728402','10728400','10728435','10728517','10728383',
 		'10728534','10728432','10728401','10728391','10728437','10728525','10728399','10728518','10728442','10728527','10728390',
 		'10728405','10728419','10728425','10728439','10728404','10728408','10728522','10728396','10728422','10728507','10728513',
@@ -20,6 +21,8 @@ class tactics:
 	#根据传入的传感器个数，随机挑选传感器
 	def randomTactic(self, number, total = 34,):
 		listSlice =  random.sample(range(0,total), number)
+		
+		#对随机出来的点进行排序
 		listSlice.sort()
 		selectedList = [self.sensorNum[i] for i in listSlice]
 		unSelectedList = [item for item in self.sensorNum if item not in selectedList]
@@ -33,6 +36,6 @@ class tactics:
 		
 if __name__ == '__main__':
 	tac = tactics()
-	#print tac.randomTactic()
-	print tac.fixedTactic([33])
+	#print tac.randomTactic(10)
+	print tac.fixedTactic([0,1,2])
 	

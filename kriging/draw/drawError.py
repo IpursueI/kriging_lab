@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import warnings
 
 class drawError:
 	'''将数据分析后的结果进行可视化展示'''
@@ -19,6 +20,7 @@ class drawError:
 		#zhfont = mpl.font_manager.FontProperties(fname='/usr/share/fonts/truetype/wqy/wqy-microhei.ttc') 
 		#以下是windows字体配置
 		self.zhfont = mpl.font_manager.FontProperties(fname='C:/Windows/Fonts/simhei.ttf')
+		warnings.filterwarnings("ignore")
 
 		csvfile = file(errorResultFilePath, 'rb')
 		reader = csv.reader(csvfile)

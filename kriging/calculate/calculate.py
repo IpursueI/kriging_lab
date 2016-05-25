@@ -4,6 +4,7 @@
 import sys
 sys.path.append("..")
 import numpy
+import csv
 from pickTactics.tactics import tactics
 from fileIO.readCsv import readCsv
 from fileIO.writeCsv import writeCsv
@@ -12,6 +13,17 @@ from pykrige.ok3d import OrdinaryKriging3D
 __doc__ = '''用于kriging的计算'''
 
 class calculate:
+	"""进行kriging插值
+
+	从原始传感器数据中挑选出一定量的数据进行插值
+
+	Attributes:
+		selectedList: 挑选出来的传感器插值基准点的列表
+		unSelectedList: 未挑选出来的传感器插值基准点的列表
+		sensorPosData: 传感器位置数据
+		sensorRawData: 传感器原始数据
+
+	"""
 	def __init__(self, inputPath, outputFile, selectedList, unSelectedList, totalSensorDataNum):
 		
 		reader = readCsv(inputPath)
@@ -21,17 +33,22 @@ class calculate:
 		self.sensorPosData = reader.getSensorPos()
 		self.sensorRawData = reader.getSensorData(totalSensorDataNum)
 		
-	def createData(self, rawData, selectedList):
-		#对原始数据根据selectedList进行拆分，并对坐标进行整合
+	def createData(self):
+		"""根据selectedList和sensorRawData和sensorPosData,整合出最终的代插值数据
+
+		Returns:
+			calData: 挑选出来的被插值的温度值和湿度值，这里该值是一个三维列表
+			calPos: 未挑选出来的被插值的传感器的坐标值
+		"""
 		calData = []
-		for selectedItem in selectedList:
+		for selectedItem in self.selectedList:
 			colData = []
-			for valData in rawData[selectedItem]:
+			for valData in self.sensorRawData[selectedItem]:
 				#将坐标和温湿度进行拼接
 				rowData = list(self.sensorPosData[selectedItem]) + list(valData)
-				colData.append(rowData)				
+				colData.append(rowData)
 			calData.append(colData)
-		
+
 		calPos = []
 		#找出未选中的传感器坐标
 		for unSelectedItem in self.unSelectedList:
@@ -40,6 +57,13 @@ class calculate:
 		return calData,calPos
 		
 	def calculateData(self, calData, calPos):
+		"""对每一组传感器数据调用doCalculateData进行插值
+
+		Args: 
+			calData: 由createData所得到的传感器温湿度数据
+			calPos: 由createData所得到的传感器位置数据
+
+		"""
 		colLen = [len(item) for item in calData]
 		minColLen = min(colLen)
 		
@@ -76,6 +100,15 @@ class calculate:
 			self.doCalculateData(data, gridx, gridy, gridz, rowIdx)
 			
 	def doCalculateData(self, data, gridx, gridy, gridz, rowIdx):
+		"""调用库进行kriging插值
+
+		Args:
+			data: 供插值的传感器基准点数据
+			gridx: 待插值的传感器x坐标
+			gridy: 待插值的传感器y坐标
+			gridz: 待插值的传感器z坐标
+			rowIdx:
+		"""
 		#对温度进行插值
 		ok3dTemp = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 3],variogram_model='spherical')
 		k3dTemp, ss3dTemp = ok3dTemp.execute('points', gridx, gridy, gridz)
@@ -102,7 +135,10 @@ class calculate:
 		self.writer.writeResult(finalData)
 		
 	def run(self):
-		calData, calPos = self.createData(self.sensorRawData, self.selectedList)
+		"""控制上面的函数运行，进行整体的运算
+
+		"""
+		calData, calPos = self.createData()
 		self.calculateData(calData, calPos)
 		self.writer.close()
 		print 'Calculate successfully !'
