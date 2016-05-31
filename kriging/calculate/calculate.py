@@ -15,7 +15,7 @@ __doc__ = '''用于kriging的计算'''
 class calculate:
 	"""进行kriging插值
 
-	从原始传感器数据中挑选出一定量的数据进行插值
+	从原始传感器数据中挑选出一定量的数据进行插值,同时返回方差
 
 	Attributes:
 		selectedList: 挑选出来的传感器插值基准点的列表
@@ -84,6 +84,8 @@ class calculate:
 		gridy = numpy.array([float(i) for i in gridy])
 		gridz = numpy.array([float(i) for i in gridz])
 		
+		tempVar = 0
+		humVar = 0
 		for rowIdx in range(minColLen):
 			eachRow = []
 			for colItem in calData:
@@ -93,11 +95,16 @@ class calculate:
 			eachRowFloat = []
 			for row in eachRow:
 				eachRowFloat.append([float(element) for element in row])
-			
+			#print eachRow
 			#print eachRowFloat
 			data = numpy.array(eachRowFloat)
-			
-			self.doCalculateData(data, gridx, gridy, gridz, rowIdx)
+			#print data
+			ttemp,thum = self.doCalculateData(data, gridx, gridy, gridz, rowIdx)
+
+			tempVar += ttemp
+			humVar += thum
+
+		return tempVar/minColLen,humVar/minColLen
 			
 	def doCalculateData(self, data, gridx, gridy, gridz, rowIdx):
 		"""调用库进行kriging插值
@@ -111,6 +118,8 @@ class calculate:
 		"""
 		#对温度进行插值
 		ok3dTemp = OrdinaryKriging3D(data[:, 0], data[:, 1], data[:, 2], data[:, 3],variogram_model='spherical')
+		#print data[:,1]
+		#print gridx
 		k3dTemp, ss3dTemp = ok3dTemp.execute('points', gridx, gridy, gridz)
 		
 		#对湿度进行差值
@@ -119,6 +128,8 @@ class calculate:
 		
 		#最后保存的数据，包括传感器编号，对应的x，y，z坐标，原始值，差值测量值
 		finalData = []
+		tempVar = 0
+		humVar = 0
 		for idx in range(len(self.unSelectedList)):
 			rowData = []
 			rowData.append(self.unSelectedList[idx])
@@ -130,18 +141,29 @@ class calculate:
 			rowData.append(self.sensorRawData[self.unSelectedList[idx]][rowIdx][1])  #湿度
 			rowData.append(str(k3dHum[idx]))
 			
+			originalTemp = float(self.sensorRawData[self.unSelectedList[idx]][rowIdx][0])
+			originalHum = float(self.sensorRawData[self.unSelectedList[idx]][rowIdx][1])
+			tempVar += (originalTemp-k3dTemp[idx])*(originalTemp-k3dTemp[idx])
+			humVar += (originalHum-k3dHum[idx])*(originalHum-k3dHum[idx])
 			finalData.append(rowData)
 		
+
 		self.writer.writeResult(finalData)
-		
+
+		return tempVar/len(self.unSelectedList),humVar/len(self.unSelectedList)
+
 	def run(self):
 		"""控制上面的函数运行，进行整体的运算
 
+		Returns:
+			tempVar: 温度方差
+			humVar: 湿度方差
 		"""
 		calData, calPos = self.createData()
-		self.calculateData(calData, calPos)
+		tempVar,humVar = self.calculateData(calData, calPos)
 		self.writer.close()
 		print 'Calculate successfully !'
+		return tempVar,humVar
 	
 if __name__ == '__main__':
 	
@@ -150,4 +172,4 @@ if __name__ == '__main__':
 	cal = calculate('E:/code/python/kriging_lab/kriging/data',
 	'E:/code/python/kriging_lab/kriging/data/result/result.csv',
 	selectedList, unSelectedList,10)
-	cal.run()
+	print cal.run()

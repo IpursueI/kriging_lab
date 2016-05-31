@@ -5,11 +5,28 @@ import csv
 from pygame.locals import *
 
 class drawLayout:
+    """利用pygame对variance.csv中的传感器布局进行绘制
+
+    Attributes:
+        WINDOWWIDTH: 窗口宽度
+        WINDOWHEIGHT: 窗口高度
+
+        AQUA - MYC: 颜色
+
+        BGCOLOR: 背景色
+        sensorPos: 传感器坐标
+
+        sensorPos: 传感器编号做对应坐标，类型是字典
+        variance: 从文件中读取的，每种传感器选择策略所对应的方差
+
+        FPS: 程序运行时每秒的帧数
+    """
+
     def __init__(self, posPath, variancePath, selectedSensorNum):
+        """各个属性初始化
+        """
         self.WINDOWWIDTH = 1250
         self.WINDOWHEIGHT = 800
-
-        self.BOXSIZE = 40
 
         self.AQUA = (0, 255, 255)
         self.SILVER = (192, 192, 192)
@@ -25,25 +42,20 @@ class drawLayout:
         self.CYAN = ( 0, 255, 255)
         self.MYC = (107, 142, 35)
 
-        self.BGCOLOR = self.NAVYBLUE
+        self.BGCOLOR = self.SILVER
 
         self.sensorImg1 = pygame.image.load('sensor.png')
-
-        self.sensorx = 10
-        self.sensory = 10
 
         self.sensorPos = self.readSensorPos(posPath)
         self.variance = self.readVariance(variancePath, selectedSensorNum)
 
         self.FPS = 30 # frames per second setting
         self.fpsClock = pygame.time.Clock()
-
-        self.BGIMAGE = pygame.image.load('background.jpg')
-        
-
         
 
     def main(self):
+        """控制整个程序的界面绘制
+        """
         pygame.init()
         self.screen = pygame.display.set_mode((self.WINDOWWIDTH, self.WINDOWHEIGHT))
         pygame.display.set_caption('cave sensors layout')
@@ -63,6 +75,8 @@ class drawLayout:
                     pygame.quit()
                     sys.exit()
                 elif event.type == MOUSEBUTTONDOWN:
+                    #根据按键记录绘制第几个传感器布局
+
                     if self.Button1.pressed(pygame.mouse.get_pos()):
                         self.layoutCount -= 1
                         self.drawLayout()
@@ -72,11 +86,20 @@ class drawLayout:
                     
 
             #最后进行绘制
+
             pygame.display.update()
             self.fpsClock.tick(self.FPS)
 
 
     def readSensorPos(self,filePath):
+        """从文件中读取传感器的位置信息
+
+        Args:
+            filePath: 文件路径
+
+        Returns:
+            sensors: 一个字典，key为传感器编号，value为传感器的x,y坐标，以及传感器的高度编号,编号的取值为1-4
+        """
         csvfile = file(filePath, 'rb')
         reader = csv.reader(csvfile)
         data = [line for line in reader]
@@ -88,6 +111,15 @@ class drawLayout:
 
 
     def readVariance(self, filePath, selectedSensorNum):
+        """从文件中读取传感器的方差
+
+        Args:
+            filePath: 文件路径
+            selectedSensorNum: 传感器的个数
+
+        Returns:
+            res: 列表，返回传感器的编号以及温度和湿度的方差
+        """
         csvfile = file(filePath, 'rb')
         reader = csv.reader(csvfile)
         data = [line for line in reader]
@@ -97,9 +129,14 @@ class drawLayout:
         return res
 
     def initDraw(self):
+        """初始化界面
+
+        绘制界面背景色，洞窟的边界，以及按钮
+        """
         # Use smoothscale() to stretch the background image to fit the entire window:
-        self.BGIMAGE = pygame.transform.smoothscale(self.BGIMAGE, (self.WINDOWWIDTH, self.WINDOWHEIGHT))
-        self.screen.blit(self.BGIMAGE, self.BGIMAGE.get_rect())
+        #self.BGIMAGE = pygame.transform.smoothscale(self.BGIMAGE, (self.WINDOWWIDTH, self.WINDOWHEIGHT))
+        self.screen.fill(self.BGCOLOR)
+        #self.screen.blit(self.BGIMAGE, self.BGIMAGE.get_rect())
 
         pygame.draw.line(self.screen, self.GRAY, (0, 20), (600, 20), 15)
         pygame.draw.line(self.screen, self.GRAY, (600, 20), (600, 270), 15)
@@ -123,27 +160,39 @@ class drawLayout:
 
     #根据传感器位置进行绘制
     def drawSensorPos(self, drawSensorBar):
+        """对传感器的位置进行绘制，包括传感器图标和一个1*4的矩形框
+
+        Args:
+            drawSensorBar:控制是否绘制1*4的矩形框
+        """
         sensorPos = ((0,900),(0,460),(191.1,460),(461.1,460),(737.1,460),(920,0),(1010,460),(1100,290),(1450,460),(1800,740),(1800,300))
         sensorNarrowPos = [[item[0]*0.6, 1000*0.6-item[1]*0.6] for item in sensorPos]
         for item in sensorNarrowPos:
             self.screen.blit(self.sensorImg1, (item[0], item[1]))
             if drawSensorBar == True:
-                pygame.draw.rect(self.screen, self.SILVER, (item[0]+60,item[1]-30, 25, 100))
+                pygame.draw.rect(self.screen, self.WHITE, (item[0]+60,item[1]-30, 25, 100))
 
 
 
     def drawLayout(self):
-        #self.screen.fill(self.BGCOLOR) #重新填充背景色，整个图形重新构建，就相当于把原先添加的传感器图片删除掉了！！！！！
+        """每按一次按钮，调用一次该函数，对整个界面重新绘制
+        """
+
         self.initDraw()
         self.drawSensorPos(True)
+
+        #传感器布局选择时的边界控制
 
         if self.layoutCount < 0:
             self.layoutCount = 0
         elif self.layoutCount >= len(self.variance):
             self.layoutCount = len(self.variance)-1
+
         var = self.variance[self.layoutCount]
+
+        #根据选中的传感器，对其进行绘制，这里用各种颜色的1*1的矩形框代替
+
         for item in var[0]:
-            #print item, self.sensorPos[item][2]
             if self.sensorPos[item][2] == 1:
                 pygame.draw.rect(self.screen, self.ORANGE, (self.sensorPos[item][0]+60,self.sensorPos[item][1]+45, 25, 25))
             elif self.sensorPos[item][2] == 2:
@@ -153,6 +202,8 @@ class drawLayout:
             elif self.sensorPos[item][2] == 4:
                 pygame.draw.rect(self.screen, self.CYAN, (self.sensorPos[item][0]+60,self.sensorPos[item][1]-30, 25, 25))
 
+        #选择字体输出方差信息
+        
         fontObj1 = pygame.font.Font('freesansbold.ttf', 25)
         fontObj2 = pygame.font.Font('freesansbold.ttf', 30)
 

@@ -34,8 +34,8 @@ class readCsv:
 			#每个文件的末尾含有一些无用数据，因此删除一些
 			fileLen = len(tmpData)-4
 
-			#取totalNum和fileLen的最小值，防止所给的totalNum超出总的数据量
-			totalNum = min(totalNum, fileLen)
+			#取totalNum和fileLen/10的最小值，防止所给的totalNum超出总的数据量
+			totalNum = min(totalNum, fileLen/10)
 			
 			#根据文件名获取传感器编号
 			fileName = os.path.basename(item)

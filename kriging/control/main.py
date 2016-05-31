@@ -1,6 +1,7 @@
 #!/usr/bin/python
 #-*- coding:utf-8 -*-
 
+import csv
 import sys
 sys.path.append("..")
 from pickTactics.tactics import tactics
@@ -12,71 +13,83 @@ from draw.drawErrorRating import drawErrorRating
 class process:
     """控制整体运行流程，对其他模块进行调用。
 
-    调用的模块涉及tactics,calculate,analysis,drawError,drawErrorRating
+    调用的模块涉及tactics,calculate,analysis
 
     Attributes:
         inputFile: 传感器原始数据文件夹路径
         valueResultFile:  经过插值后所得结果，保存的路径名
-        errorResultFile:  根据插值后的结果，经过误差计算，保存的路径名
-        errorRatingResultFile:  根据误差结果，进一步进行比例分析，保存的路径名
     """
 
-    def __init__(self, inputFile, valueResultFile, errorResultFile, errorRatingResultFile):
+    def __init__(self, inputFile, pickSensorNum, totalSensorNum):
         self.inputFile = inputFile
-        self.valueResultFile = valueResultFile
-        self.errorResultFile = errorResultFile
-        self.errorRatingResultFile = errorRatingResultFile
+        self.pickSensorNum = pickSensorNum
+        self.totalSensorNum = totalSensorNum
 
-    def run(self, needTacticsAndCalculate, needAnalysis, needDrawError, needDrawErrorRating, 
-                pickSensorNum, totalSensorDataNum, error, valueBarIdx,totalSensorNum=34):
-        """对整个模块的运行流程进行控制
+    def pickSensor(self):
+        pickRes = []
+        tac = tactics()
+        #人工挑选
+        pickRes.append(tac.fixedTactic([1,7,8,13,15,17,22,24,31,32]))
+        #随机挑选
+        for i in range(10):
+            pickRes.append(tac.randomTactic(10))
 
-        对每个流程使用一个bool值进行控制，bool值为真时，才执行该模块
+        return pickRes
+
+    def cal(self, valueResultFile, selectedList, unSelectedList, totalSensorDataNum):
+        """对输入数据进行插值计算，并保存文件，再对文件数据分析求出温湿度方差，并返回
 
         Args:
-            needTacticsAndCalculate: 是否要运行tactics模块和calculate模块
-            needAnalysis: 是否要运行分析模块
-            needDrawError: 是否要运行drawError模块
-            needDrawErrorRating: 是否要运行drawErrorRating模块
-            pickSensorNum: 挑选出来用做插值基准点的个数
-            totalSensorDataNum: 根据原始数据的csv， 每一时刻都能取得一组数据，这里这个值代表挑选出来的数据组数
-            error: 绘制误差饼状图的时候需要提供一个误差值
-            valueBarIdx: 由于有多组数据，这里有totalSensorDataNum个，数据太多如果同时绘制，不变查看，可以指定编号进行绘制展示
-            totalSensorNum: 所有传感器的个数，这里一共有34个
+            valueResultFile: 保存的文件名
+            selectedList: 挑选出来的传感器点
+            unSelectedList: 未被挑选的传感器点
+            totalSensorDataNum: 根据不同的时间挑选出来的传感器数据组数
+
+        Return:
+            an.getTempVar(): 温度方差
+            an.getHumVar(): 湿度方差
         """
+        #利用kriging对所选的数据进行计算
+        caler = calculate(self.inputFile, valueResultFile, selectedList, unSelectedList, totalSensorDataNum)
+        tempVar,humVar =  caler.run()
 
-        if needTacticsAndCalculate:
-            #对传感器的挑选策略进行选择
-            
-            tac = tactics()
-            selectedList, unSelectedList = tac.randomTactic(pickSensorNum)
+        #把计算方差的功能继承到calculate模块中，避免重复读文件计算方差，所以下面三行可以去掉
+        #将analysis中没有使用到的文件赋值为空字符串
+        #an = analysis(valueResultFile,"","", self.totalSensorNum, self.pickSensorNum)
+        #print an.getTempVar(),an.getHumVar()
+        return tempVar,humVar
 
-            #利用kriging对所选的数据进行计算
-            caler = calculate(self.inputFile, self.valueResultFile, selectedList, unSelectedList, totalSensorDataNum)
-            caler.run()
+    def writeVar(self, variance, varianceFile):
+        #采用追加的模式把每次的方差数据都保存下来
+        csvfile = file(varianceFile, 'a+')  
+        writer = csv.writer(csvfile)
+        resultData = []
 
-        if needAnalysis:
-            #对计算结果进行误差分析，并保存
-            an = analysis(self.valueResultFile, self.errorResultFile, self.errorRatingResultFile, totalSensorNum, pickSensorNum)
-            an.writeErrorResult()
-            an.writeErrorRatingResult(error)
+        for item in variance:
+            tmp = []
+            for i in range(2):
+                for j in item[i]:
+                    tmp.append(j)
+            resultData.append(tmp)
 
-        if needDrawError:
-            #对计算结果进行可视化展示
-            drawer = drawError(self.errorResultFile, totalSensorNum-pickSensorNum)
-            drawer.drawValueBars(valueBarIdx)
+        writer.writerows(resultData)
+        csvfile.close()
 
-        if needDrawErrorRating:
-            drawer = drawErrorRating(self.errorRatingResultFile)
-            drawer.drawErrorRatingPie()
+    def run(self, varianceFile):
+        baseFileName = 'E:/code/python/kriging_lab/kriging/data/result/result'
+        variance = []
+        pickRes = self.pickSensor()
+        for idx in range(len(pickRes)):
+            tmpFileName = baseFileName+str(idx)+'.csv'
+            tmp = []
+            tmp.append(pickRes[idx][0])
+            tmp.append(self.cal(tmpFileName, pickRes[idx][0], pickRes[idx][1], 100))
+            variance.append(tmp)
+
+        #保存方差
+        self.writeVar(variance, varianceFile)
+
 
 if __name__ == '__main__':
-    processor = process('E:/code/python/kriging_lab/kriging/data',
-    'E:/code/python/kriging_lab/kriging/data/result/result.csv',
-    'E:/code/python/kriging_lab/kriging/data/result/errorResult.csv',
-    'E:/code/python/kriging_lab/kriging/data/result/errorRatingResult.csv')
-
-    #processor.run(True, True, True, True, 14, 50, 0.05, 10)
-
-    #有时当只需看绘制结果时无需重新计算
-    processor.run(False, False, True, True, 14, 50, 0.05, 10)
+    processor = process('E:/code/python/kriging_lab/kriging/data',10, 34)
+    processor.run('E:/code/python/kriging_lab/kriging/data/result/variance.csv')
