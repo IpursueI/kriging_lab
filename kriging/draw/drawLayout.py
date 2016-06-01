@@ -22,7 +22,7 @@ class drawLayout:
         FPS: 程序运行时每秒的帧数
     """
 
-    def __init__(self, posPath, variancePath, selectedSensorNum):
+    def __init__(self, posPath, variancePath):
         """各个属性初始化
         """
         self.WINDOWWIDTH = 1250
@@ -47,7 +47,7 @@ class drawLayout:
         self.sensorImg1 = pygame.image.load('sensor.png')
 
         self.sensorPos = self.readSensorPos(posPath)
-        self.variance = self.readVariance(variancePath, selectedSensorNum)
+        self.variance = self.readVariance(variancePath)
 
         self.FPS = 30 # frames per second setting
         self.fpsClock = pygame.time.Clock()
@@ -110,12 +110,11 @@ class drawLayout:
         return sensorPos
 
 
-    def readVariance(self, filePath, selectedSensorNum):
+    def readVariance(self, filePath):
         """从文件中读取传感器的方差
 
         Args:
             filePath: 文件路径
-            selectedSensorNum: 传感器的个数
 
         Returns:
             res: 列表，返回传感器的编号以及温度和湿度的方差
@@ -125,7 +124,7 @@ class drawLayout:
         data = [line for line in reader]
         res = []
         for item in data:
-            res.append([item[:selectedSensorNum], item[selectedSensorNum:]])
+            res.append([item[:-2], item[-2:]])
         return res
 
     def initDraw(self):
@@ -206,6 +205,7 @@ class drawLayout:
         
         fontObj1 = pygame.font.Font('freesansbold.ttf', 25)
         fontObj2 = pygame.font.Font('freesansbold.ttf', 30)
+        fontObj3 = pygame.font.Font('freesansbold.ttf', 30)
 
         textSurfaceObj = fontObj1.render("temp var: %.2f"%(float(var[1][0])), True, self.WHITE)
         textRectObj = textSurfaceObj.get_rect()
@@ -224,7 +224,14 @@ class drawLayout:
         textRectObj2.center = (330, 100)
         self.screen.blit(textSurfaceObj2, textRectObj2)
 
+        textSurfaceObj4 = fontObj3.render("num of sensors: %d" % (len(self.variance[self.layoutCount][0])), True, self.PURPLE)
+        textRectObj4 = textSurfaceObj4.get_rect()
+        textRectObj4.center = (330, 250)
+        self.screen.blit(textSurfaceObj4, textRectObj4)
+
+
+
 if __name__ == '__main__':
     drawer = drawLayout('E:/code/python/kriging_lab/kriging/data/pos/pos.csv',
-        'E:/code/python/kriging_lab/kriging/data/result/variance.csv', 10)
+        'E:/code/python/kriging_lab/kriging/data/result/variance.csv')
     drawer.main()
