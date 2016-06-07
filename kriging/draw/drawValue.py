@@ -80,5 +80,5 @@ class drawValue:
 
             
 if __name__ == "__main__":
-    drawer = drawValue('E:/code/python/kriging_lab/kriging/data/result/result0.csv',34-15)
+    drawer = drawValue('E:/code/python/kriging_lab/kriging/data/result/result0.csv',34-10)
     drawer.drawValueBars(30)

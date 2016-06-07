@@ -30,7 +30,7 @@ class process:
         pickRes = []
         tac = tactics()
         #人工挑选
-        #pickRes.append(tac.fixedTactic([1,7,8,13,15,17,22,24,31,32]))
+        pickRes.append(tac.fixedTactic([1,7,8,13,15,17,22,24,31,32]))
         #随机挑选
         for i in range(randomNum):
             pickRes.append(tac.randomTactic(self.pickSensorNum))
@@ -92,5 +92,5 @@ class process:
 
 
 if __name__ == '__main__':
-    processor = process('E:/code/python/kriging_lab/kriging/data',15, 34)
+    processor = process('E:/code/python/kriging_lab/kriging/data',10, 34)
     processor.run('E:/code/python/kriging_lab/kriging/data/result/variance.csv')
